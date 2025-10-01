@@ -1,0 +1,22 @@
+# Ignore environment variables
+.env
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore database files
+*.db
+
+# VSCode or editor folders (optional)
+.vscode/
+.idea/
+
+# Ignore compiled files
+*.log
+*.sqlite3
+*.sqlite
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
