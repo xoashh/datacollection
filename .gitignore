@@ -1,22 +1,27 @@
-# Ignore environment variables
-.env
-
-# Ignore Python cache
+# Ignore Python cache and compiled files
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Ignore database files
+# Ignore virtual environments
+env/
+venv/
+
+# Ignore databases and data files
 *.db
+*.sqlite
+*.sqlite3
+*.csv
 
-# VSCode or editor folders (optional)
+# Ignore environment variable files
+.env
+.env.*
+
+# Ignore editor / IDE files
 .vscode/
 .idea/
 
-# Ignore compiled files
-*.log
-*.sqlite3
-*.sqlite
-
-# Ignore OS files
+#  Ignore OS system files
 .DS_Store
 Thumbs.db
