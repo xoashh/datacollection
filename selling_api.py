@@ -3,10 +3,46 @@ from fastapi.responses import StreamingResponse
 import sqlite3
 import pandas as pd
 import io
+import sqlite3
+from fastapi import Depends, Header
+from scrapers import (
+    fetch_and_store_reddit,
+    fetch_and_store_hackernews,
+    fetch_and_store_newsapi,
+)
 
-API_KEYS = {"your_test_key": "Test User"}  # Replace with your real buyer keys
 
 app = FastAPI()
+
+API_KEYS = {"buyer_secret_key_123": "Client A",
+			"another_key_456": "Client B",
+			"your_test_key": "Test User"
+		}  # Replace with your real keys
+
+
+
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key not in API_KEYS:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    return x_api_key
+
+
+@app.post("/scrape/reddit", tags=["Scrapers"])
+async def trigger_reddit_scrape(api_key: str = Depends(verify_api_key)):
+    fetch_and_store_reddit()
+    return {"detail": "Reddit trending data updated."}
+
+@app.post("/scrape/hackernews", tags=["Scrapers"])
+async def trigger_hn_scrape(api_key: str = Depends(verify_api_key)):
+    fetch_and_store_hackernews()
+    return {"detail": "Hacker News trending data updated."}
+
+@app.post("/scrape/news", tags=["Scrapers"])
+async def trigger_news_scrape(api_key: str = Depends(verify_api_key)):
+    fetch_and_store_newsapi()
+    return {"detail": "NewsAPI data updated."}
+
+
 
 def check_api_key(x_api_key: str = Header(...)):
     if x_api_key not in API_KEYS:
@@ -55,3 +91,61 @@ def get_reddit_trending_csv(limit: int = 20, x_api_key: str = Header(...)):
     df.to_csv(stream, index=False)
     stream.seek(0)
     return StreamingResponse(stream, media_type="text/csv")
+    
+@app.get("/data/reddit", tags=["Data"])
+async def get_reddit_data(limit: int = 10, api_key: str = Depends(verify_api_key)):
+    conn = sqlite3.connect("trending_data.db")
+    c = conn.cursor()
+    c.execute("""
+        SELECT title, url, score, created_utc 
+        FROM reddit_trending 
+        ORDER BY created_utc DESC 
+        LIMIT ?
+    """, (limit,))
+    rows = c.fetchall()
+    conn.close()
+    return {"results": [dict(zip(["title", "url", "score", "created_utc"], row)) for row in rows
+    
+        ],
+        "totalResults": len(rows)
+    }
+@app.get("/data/hackernews", tags=["Data"])
+async def get_hackernews_data(limit: int = 10, api_key: str = Depends(verify_api_key)):
+    conn = sqlite3.connect("trending_data.db")
+    c = conn.cursor()
+    c.execute("""
+        SELECT title, url, score, created_utc 
+        FROM hn_trending 
+        ORDER BY created_utc DESC 
+        LIMIT ?
+    """, (limit,))
+    rows = c.fetchall()
+    conn.close()
+    return {
+        "results": [
+            {"title": r[0], "url": r[1], "score": r[2], "created_utc": r[3]}
+            for r in rows
+        ],
+        "totalResults": len(rows)
+    }
+    
+@app.get("/data/news", tags=["Data"])
+async def get_newsapi_data(limit: int = 10, api_key: str = Depends(verify_api_key)):
+    conn = sqlite3.connect("trending_data.db")
+    c = conn.cursor()
+    c.execute("""
+        SELECT source, title, url, published_at 
+        FROM news_trending 
+        ORDER BY published_at DESC 
+        LIMIT ?
+    """, (limit,))
+    rows = c.fetchall()
+    conn.close()
+    return {
+        "results": [
+            {"source": r[0], "title": r[1], "url": r[2], "published_at": r[3]}
+            for r in rows
+        ],
+        "totalResults": len(rows)
+    }
+
