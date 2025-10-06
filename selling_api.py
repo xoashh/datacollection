@@ -149,3 +149,28 @@ async def get_newsapi_data(limit: int = 10, api_key: str = Depends(verify_api_ke
         "totalResults": len(rows)
     }
 
+from fastapi.openapi.utils import get_openapi
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version="1.0.0",
+        description="API for collecting and selling trending data.",
+        routes=app.routes,
+    )
+
+    openapi_schema["components"]["securitySchemes"] = {
+        "apiKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "x-api-key"
+        }
+    }
+    openapi_schema["security"] = [{"apiKeyAuth": []}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
