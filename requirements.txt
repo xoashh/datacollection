@@ -1,5 +1,12 @@
-praw
-requests
 fastapi
 uvicorn
 pandas
+praw
+requests
+beautifulsoup4
+pytrends
+snscrape
+google-api-python-client
+yfinance
+textblob
+pycoingecko
